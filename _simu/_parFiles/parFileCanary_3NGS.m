@@ -26,7 +26,7 @@ nPx     = 8; %1D \# pixels per lenslet
 nPxWfs  = nL*nPx;
 d       = D/nL; %subaperture size
 minLightRatio  = 0.5; % ratio of subap illumination to be valid
-wfsPscale = 0.21;% Pixel scale in arcsec
+wfsPscale = 0.26;% Pixel scale in arcsec in NGS Vidal et. al. 2014
 fovWfs    = wfsPscale*nPx; %WFS field of view in arcsec
 % Calculate the number of pixels to get the closest pixel scale
 lambdaOverd = constants.radian2arcsec*photoNgs.wavelength/d;
@@ -34,7 +34,7 @@ fovWfsinlod = floor(fovWfs/lambdaOverd); % WFS fov in l/d units
 Samp        = lambdaOverd/wfsPscale; % WFS sampling;
 resTel      = nPx*nL*round(1/Samp); % \# pixels within the pupil
 fovTel      = 2*max(rNgs)*constants.radian2arcsec; % telescope fov ni arcsec.
-ron = 2;
+ron = 0.7; %Vidal et. al. 2014
 phNoise = true;
 %5\ LOOP
 nExp = 1;%simulation time in seconds. %% TBC %%
