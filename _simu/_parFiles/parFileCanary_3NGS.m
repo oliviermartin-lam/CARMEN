@@ -34,7 +34,8 @@ fovWfsinlod = floor(fovWfs/lambdaOverd); % WFS fov in l/d units
 Samp        = lambdaOverd/wfsPscale; % WFS sampling;
 resTel      = nPx*nL*round(1/Samp); % \# pixels within the pupil
 fovTel      = 2*max(rNgs)*constants.radian2arcsec; % telescope fov ni arcsec.
-
+ron = 2;
+phNoise = true;
 %5\ LOOP
 nExp = 1;%simulation time in seconds. %% TBC %%
 nScreens=1; %% TBC %%
