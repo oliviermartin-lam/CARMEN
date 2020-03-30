@@ -128,12 +128,7 @@ for l=1:nScreens
     sref = sref.*tel*ts; %Define the light optical path for the Truth sensor;
     ngs = ngs.*tel*wfs; %Define the light optical path for the Truth sensor;
             
-    close all;
-    if exist('hwait')
-        hwait.delete;
-    end
-    hwait = waitbar(0,'Loop is being closed...');
-    
+    close all;            
     for kIter=1:nIter
         tic;
         %1\ Updating phase screens
@@ -154,20 +149,8 @@ for l=1:nScreens
         %4\ MMSE tomography
         if flagMMSE
             tomoSl(:,kIter) = Rmmse*wfs.slopes(:);
-        end
-        
-        % Updating the waiting bar and remaining time
-        waitbar(kIter/nIter);
-        dt  = dt + toc();
-        if kIter>1 && kIter<nIter
-            fprintf(1, repmat('\b',1,count)); %delete line before
-            count = fprintf('\nRemaining simulation time: %0.5g s\n',dt*(nIter-kIter)/kIter);
-        elseif kIter==nIter
-            fprintf(1, repmat('\b',1,count)); %delete line before
-            count = fprintf('\nRemaining simulation time: %0.5g s\n',dt*(nIter-kIter)/kIter);
-        end
+        end               
     end
-    close(hwait);
     
     fitswrite(wfsSl,[path_res,'WFS_SLOPES/offaxiswfss_slopes_',num2str(alt(l)),'km.fits']);
     fitswrite(tsSl,[path_res,'TS_SLOPES/ts_slopes_',num2str(alt(l)),'km.fits']);
