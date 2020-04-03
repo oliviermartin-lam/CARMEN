@@ -1,4 +1,4 @@
-\%1\ TELESCOPE
+%1\ TELESCOPE
 D 	= 4.2; %telescope diameter in meter
 cobs 	= 0.285; % central obscuration ratio
 Fe      = 150; % Phase screen upgrate rate in Hz
