@@ -97,7 +97,7 @@ wfsCam = zeros(nPx*nL,nL*nPx*nNgs,nIter);
 %Enable readout and phton noise
 wfs.camera.readOutNoise = ron;
 wfs.camera.photonNoise = phNoise;
-
+wfs.camera.quantumEfficiency = wfsQE;
     
 % Loop on atmosphere status
 

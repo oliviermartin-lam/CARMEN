@@ -1,21 +1,26 @@
-function [wfe,bias] = getWaveFrontErrorFromSlopes_CANARY(sdiff)
-
+function [wfe,bias,wfe_t] = getWaveFrontErrorFromSlopes_CANARY(slopes,varargin)
+inputs = inputParser;
+inputs.addRequired('slopes', @isnumeric);
+inputs.addParameter('S2Z', [],@isnumeric);
+inputs.parse(slopes,varargin{:});
+S2Z = inputs.Results.S2Z;
 %son must be provided as a matrix of size 72 x nIteration
-%1\ Get the reconstructor
-%volt2adu  = 2^15/10.;
-%volt2nm= 0.78*1e3;
-%adu2volt  = 1./volt2adu;
-%tonm = volt2nm*adu2volt;
-%R = fitsread('mc_2013-07-22_17h31m18s_TS.fits')';
 
+% Manage the Zernike reconstruction matrix
+if isempty(S2Z) 
+    psTS = 0.219245;
+    S2Z =  (0.5 * 4.2 * 1e9 * psTS / (3600.*180./pi)) * fitsread('GLOB_mrz_7x7.fits')'; %in nm
+end
 
+% Mean removal
+smean = mean(slopes,2);
+s_rmmean = bsxfun(@minus,slopes,smean);%subtract the temporal average
 
-R = fitsread('zmi_7x7.fits');
-smean = mean(sdiff,2);
-s_rmmean = bsxfun(@minus,sdiff,smean);%subtract the temporal average
+%Zernike decomposition
+z_mean = S2Z*smean; % coefficient of the averaged centroids 35x1
+z_rmmean = S2Z*s_rmmean; % mean-removed 35x2048
 
-z_mean = R*smean; % coefficient of the averaged centroids 35x1
-z_rmmean = R*s_rmmean; % mean-removed 35x2048
-
-wfe = sqrt(sum(z_rmmean.^2,1)); % sum of mean-removed Zernike coefficients
+%Get wfe errors
+wfe_t = sqrt(sum(z_rmmean.^2,1)); % sum of mean-removed Zernike coefficients
+wfe = mean(wfe_t);
 bias = sqrt(sum(z_mean.^2));% Mean value

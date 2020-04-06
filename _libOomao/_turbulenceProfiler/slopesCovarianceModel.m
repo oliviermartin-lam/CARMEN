@@ -1039,15 +1039,17 @@ classdef slopesCovarianceModel < handle
                 out = [];
             end
         end
-        function R = getMMMSEreconstructor(obj,covMat)
+        function R = getMMMSEreconstructor(obj,covMat,cond)
             
+            if nargin < 3
+                cond = 30;
+            end
             %Splitting
             idxSci = obj.getScienceIndex();
             if idxSci~=0
                 tmpCsg  = covMat(obj.slrange(idxSci),obj.norange(idxSci));
                 tmpCgg  = covMat(obj.norange(idxSci),obj.norange(idxSci));
                 %Inverting the cross-covariance matrix
-                cond = 30;
                 mCgg = pinv(tmpCgg,obj.getInversionTolerance(tmpCgg,cond));
                 %Computing the MMSE reconstructor
                 R    = tmpCsg*mCgg';
@@ -1073,6 +1075,7 @@ classdef slopesCovarianceModel < handle
             end
             obj.Cee = Cee;
         end
+        
         function wfeTomo = getWaveFrontError(obj,Cee)
             if isempty(obj.Projector)
                 wfeTomo = 0;

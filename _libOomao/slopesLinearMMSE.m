@@ -141,8 +141,7 @@ classdef slopesLinearMMSE < handle
             inputs.addOptional('tMulti', 0, @isnumeric ); % Time difference for mulit-time-step reconstruction
             inputs.addOptional('NF', 1024, @isnumeric ); % Tuning parameter for FFT model
             inputs.addOptional('sf', 4, @isnumeric ); % Tuning parameter for FFT model
-            inputs.addOptional('wavefrontMask', [], @islogical ); % phse mask for reconstructed phase
-            
+            inputs.addOptional('wavefrontMask', [], @islogical ); % phse mask for reconstructed phase            
             inputs.parse(wfs,tel,atmModel,guideStar,varargin{:});
             
             obj.nSub    = inputs.Results.wfs.lenslets.nLenslet;
