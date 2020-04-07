@@ -4,14 +4,32 @@ cobs 	= 0.285; % central obscuration ratio
 Fe      = 150; % Phase screen upgrate rate in Hz
 
 
-%2\ ATMOSPHERE
+%2\ ATMOSPHERE - Test 1
 photoAtm	= photometry.V0;      % photometric band to define atmospheric parameters V0->500nm
 windSpeed	= [7.5, 12.5, 15., 20.];       % wind speed vector in m/s
 windDirection	= [0, 11*pi/6, 3*pi/4, 4*pi/3];    % wind direction vector in rad
 L0           	= [25 25 25 25];         % Outer scale in meters
-r0           	= 0.2;                         % coherence lenght in meters at 500 nm
+r0           	= 0.16;                         % coherence lenght in meters at 500 nm
 fractionalR0 	= [65,15,10,10]/100.; % fractional weight of turbulent layers
 altitude = [0, 4000., 10000., 15500.];
+
+% %2\ ATMOSPHERE - Test 2
+% photoAtm	= photometry.V0;      % photometric band to define atmospheric parameters V0->500nm
+% windSpeed	= [7.5, 12.5, 15., 20.];       % wind speed vector in m/s
+% windDirection	= [0, 11*pi/6, 3*pi/4, 4*pi/3];    % wind direction vector in rad
+% L0           	= [25 25 25 25];         % Outer scale in meters
+% r0           	= 0.12;                         % coherence lenght in meters at 500 nm
+% fractionalR0 	= [45,15,30,10]/100.; % fractional weight of turbulent layers
+% altitude = [0, 2500., 4000., 13500.];
+% 
+% %2\ ATMOSPHERE - Test 3
+% photoAtm	= photometry.V0;      % photometric band to define atmospheric parameters V0->500nm
+% windSpeed	= [10., 15., 17.5, 25.];       % wind speed vector in m/s
+% windDirection	= [0, 11*pi/6, 3*pi/4, 4*pi/3];    % wind direction vector in rad
+% L0           	= [25 25 25 25];         % Outer scale in meters
+% r0           	= 0.085;                         % coherence lenght in meters at 500 nm
+% fractionalR0 	= [80,5,10,5]/100.; % fractional weight of turbulent layers
+% altitude = [0, 6500., 10000., 15500.];
 
 %3\ NGSs
 photoNgs= photometry.R;                % photometric band    640 nm
@@ -40,7 +58,7 @@ wfsQE = 0.1;% include detector quantum efficiency and throughput
 nIter = 100;%number of simulated frames
 
 %6\ TRAINING
-nScreens=1; %% TBC %%
+nScreens=5; %% TBC %%
 hmin = 10;%minimal altitude
 hmax = 15500;%maximal altitude
 L0_training = [25,25];

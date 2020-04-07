@@ -1,8 +1,8 @@
 %% MANAGE workspaces
 close all; % close all figures
 clear all; % clear the workspace
-path_carmen = '/home/carlos/8_Conv_Carmen/matlab_sim/CODES'; %% TBC %%
-path_res = '/home/carlos/8_Conv_Carmen/matlab_sim/Test_1/'; %% TBC %%
+path_carmen = '/home/carlos/0_Projects/8_Conv_Carmen/matlab_sim/CARMEN/'; %% TBC %%
+path_res = '/home/carlos/0_Projects/8_Conv_Carmen/matlab_sim/Data/New_code_test/'; %% TBC %%
 path_oomao = [path_carmen,'/_libOomao/']; % the oomao path
 path_workspace = [path_carmen,'/_simu']; % the simulation folder path
 addpath(genpath(path_oomao),path_workspace);
@@ -102,7 +102,7 @@ close all;
 %Altitude layer height in km for the training set
 if flagTraining
     alt = linspace(hmin/1e3,hmax/1e3,nScreens);
-    atm   = atmosphere(photoNgs,r0,mean(L0_training),'layeredL0',L0_training,'fractionnalR0',fractionalR0_training,...
+    atm = atmosphere(photoNgs,r0,mean(L0_training),'layeredL0',L0_training,'fractionnalR0',fractionalR0_training,...
     'altitude',[0,1e3],'windSpeed',10*ones(1,2),'windDirection',zeros(1,2));
 end
 %If flagTraining = false, the atmosphere is defined in parFileCanary_3NGS
@@ -110,18 +110,18 @@ end
 for l=1:nScreens
     % GENERATE TELEMETRY
     if flagTraining
-        atm.layer(2).altitude =  1e3;%alt(l)*1e3; %if training, update the altitude
+        atm.layer(2).altitude = 1e3%alt(l)*1e3; %if training, update the altitude
     end
     trs = generateTelemetry(tel,atm,ngs,sref,wfs,ts,nIter,'training',flagTraining,'ron',ron,'mmse',flagMMSE,'S2Z',S2Z);
 
    % SAVE TELEMETRY    
    if flagSave
-       fitswrite(trs.wfsSl,[path_res,'WFS_SLOPES/offaxiswfss_slopes_',num2str(alt(l)),'km.fits']);
-       fitswrite(trs.tsSl,[path_res,'TS_SLOPES/ts_slopes_',num2str(alt(l)),'km.fits']);
-       fitswrite(trs.wfsCam,[path_res,'WFS_CAM/offaxiswfss_cam_',num2str(alt(l)),'km.fits']);
-       fitswrite(trs.tsCam,[path_res,'TS_CAM/ts_slopes_',num2str(alt(l)),'km.fits']);
+       fitswrite(trs.wfsSl,[path_res,'WFS_SLOPES/offaxiswfss_slopes_',num2str(atm.layer(2).altitude),'km.fits']);
+       fitswrite(trs.tsSl,[path_res,'TS_SLOPES/ts_slopes_',num2str(atm.layer(2).altitude),'km.fits']);
+       fitswrite(trs.wfsCam,[path_res,'WFS_CAM/offaxiswfss_cam_',num2str(atm.layer(2).altitude),'km.fits']);
+       fitswrite(trs.tsCam,[path_res,'TS_CAM/ts_slopes_',num2str(atm.layer(2).altitude),'km.fits']);
        if flagMMSE
-           fitswrite(trs.tomoSl,[path_res,'TOMO_SLOPES/tomo_slopes_',num2str(alt(l)),'km.fits']);
+           fitswrite(trs.tomoSl,[path_res,'TOMO_SLOPES/tomo_slopes_',num2str(atm.layer(2).altitude),'km.fits']);
        end
    end
    trs.wfe
