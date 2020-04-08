@@ -101,16 +101,16 @@ close all;
 %% RUN THE END-TO-END SIMULATION
 %Altitude layer height in km for the training set
 if flagTraining
-    alt = linspace(hmin/1e3,hmax/1e3,nScreens);
-    atm = atmosphere(photoNgs,r0,mean(L0_training),'layeredL0',L0_training,'fractionnalR0',fractionalR0_training,...
-    'altitude',[0,1e3],'windSpeed',10*ones(1,2),'windDirection',zeros(1,2));
+    alt = linspace(hmin/1e3,hmax/1e3,nScreens);    
 end
 %If flagTraining = false, the atmosphere is defined in parFileCanary_3NGS
 
 for l=1:nScreens
     % GENERATE TELEMETRY
     if flagTraining
-        atm.layer(2).altitude = 1e3%alt(l)*1e3; %if training, update the altitude
+        %if training, update the altitude
+        atm = atmosphere(photoNgs,r0,mean(L0_training),'layeredL0',L0_training,'fractionnalR0',fractionalR0_training,...
+            'altitude',[0,alt(l)*1e3],'windSpeed',10*ones(1,2),'windDirection',zeros(1,2));
     end
     trs = generateTelemetry(tel,atm,ngs,sref,wfs,ts,nIter,'training',flagTraining,'ron',ron,'mmse',flagMMSE,'S2Z',S2Z);
 
