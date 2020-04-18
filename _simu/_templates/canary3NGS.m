@@ -65,7 +65,7 @@ ts.INIT
 +ts;
 nSl = size(ts.slopes,1);
 % Calibrate the pixel scale
-ts.gainCalibration(tel,sref);
+ts.slopesUnits =  calibrateWfsPixelScale(ts,sref,wfsPscale*1e3,nPx);
 tsPscale_simu      = ts.lenslets.fieldStopSize*constants.radian2arcsec*photoNgs.wavelength/d/nPx;
 fprintf('WFS pixel scale set to %4.2f arcsec/pixel\n',tsPscale_simu);
 ts.camera.frameListener.Enabled = false;
@@ -81,14 +81,10 @@ wfs.camera.resolution        = [nPx*nL nPx*nL];
 % Set up valid subaperture
 sref = sref.*tel*wfs;
 wfs.INIT
-+wfs;if flagTraining
-    alt = linspace(hmin/1e3,hmax/1e3,nScreens);
-    atm   = atmosphere(photoNgs,r0,mean(L0_training),'layeredL0',L0_training,'fractionnalR0',fractionalR0_training,...
-    'altitude',[0,1e3],'windSpeed',ones(1,2),'windDirection',zeros(1,2));
-end
++wfs;
 
 % Calibrate the pixel scale
-wfs.gainCalibration(tel,sref);
+wfs.slopesUnits =  calibrateWfsPixelScale(wfs,sref,wfsPscale*1e3,nPx);
 wfsnPscale_simu      = wfs.lenslets.fieldStopSize*constants.radian2arcsec*photoNgs.wavelength/d/nPx;
 wfs.camera.pixelScale = wfsnPscale_simu*constants.arcsec2radian;
 fprintf('NGS WFS pixel scale set to %4.2f arcsec/pixel\n',wfsnPscale_simu);
