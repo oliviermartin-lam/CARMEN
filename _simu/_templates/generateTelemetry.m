@@ -2,7 +2,7 @@ function trs = generateTelemetry(tel,atm,gs,sref,wfs,ts,nIter,varargin)
 inputs = inputParser;
 inputs.addRequired('tel', @(x) isa(x,'telescope'));
 inputs.addRequired('atm', @(x) isa(x,'atmosphere'));
-inputs.addRequired('ngs',@(x) isa(x,'source'));
+inputs.addRequired('gs',@(x) isa(x,'source'));
 inputs.addRequired('sref',@(x) isa(x,'source'));
 inputs.addRequired('wfs', @(x) isa(x,'shackHartmann'));
 inputs.addRequired('ts', @(x) isa(x,'shackHartmann'));
@@ -29,16 +29,16 @@ gs      = gs.*tel*wfs; %Define the light optical path for the Truth sensor;
 % Instantiate outputs
 % Slopes time-vector
 nSl     = size(wfs.slopes,1);
-nNgs    = numel(gs);
+nGs     = wfs.lenslets.nArray;
 tsSl    = zeros(nSl,nIter);
-wfsSl   = zeros(nSl,nNgs,nIter);
+wfsSl   = zeros(nSl,nGs,nIter);
 % WFSs camera
 nPx     = ts.camera.resolution(1);
 tsCam   = zeros(nPx,nPx,nIter);
-wfsCam  = zeros(nPx,nPx*nNgs,nIter);
+wfsCam  = zeros(nPx,nPx*nGs,nIter);
 % Optical phase difference map
 opdTS   = zeros(tel.resolution,tel.resolution,nIter);
-opdNGS  = zeros(tel.resolution,tel.resolution,nNgs,nIter);
+opdNGS  = zeros(tel.resolution,tel.resolution,nGs,nIter);
 
 %Enable readout and photon noise
 if ron
@@ -57,20 +57,23 @@ if multicpu && training
         draw(tel);
        
         %2\ Propagating sources to the TS
-        s2 = times(sref,tel)
-        s2 = mtimes(s2,ts)
+        s2 = times(sref,tel);
+        s2 = mtimes(s2,ts);
         %store TS slopes and pixels
-        tsSl(:,kIter) = ts.slopes;
-        tsCam(:,:,kIter) = ts.camera.frame;
-        opdTS(:,:,kIter) = s2.meanRmOpd;
+        tsSl(:,kIter)       = ts.slopes;
+        tsCam(:,:,kIter)    = ts.camera.frame;
+        opdTS(:,:,kIter)    = s2.meanRmOpd;
         
         %3\ Propagating sources to the NGS WFS
-        n2 = times(gs,tel)
-        n2 = mtimes(n2,wfs)
+        n2 = times(gs,tel);
+        if numel({n2.height}) ~= nGs % case with a thick sodium layer
+           error('The Na profilecase is not yet managed');
+        end
+        n2 = mtimes(n2,wfs);
         %store slopes and pixels
-        wfsSl(:,:,kIter) = wfs.slopes;
-        wfsCam(:,:,kIter) = wfs.camera.frame;
-        opdNGS(:,:,:,kIter) = reshape([n2.meanRmOpd],tel.resolution,tel.resolution,nNgs);
+        wfsSl(:,:,kIter)    = wfs.slopes;
+        wfsCam(:,:,kIter)   = wfs.camera.frame;
+        opdNGS(:,:,:,kIter) = reshape([n2.meanRmOpd],tel.resolution,tel.resolution,nGs);
     end
     
 else
@@ -101,7 +104,7 @@ else
         %store slopes and pixels
         wfsSl(:,:,kIter) = wfs.slopes;
         wfsCam(:,:,kIter) = wfs.camera.frame;
-        opdNGS(:,:,:,kIter) = reshape([n2.meanRmOpd],tel.resolution,tel.resolution,nNgs);
+        opdNGS(:,:,:,kIter) = reshape([n2.meanRmOpd],tel.resolution,tel.resolution,nGs);
     end
 end
 
@@ -122,7 +125,7 @@ if ~isempty(S2Z)
     %2\ MMSE
     if mmse
         [trs.Rmmse,trs.wfe.mmse_th] = getMMSE(tel,atm,gs,wfs,sref,S2Z);
-        trs.tomoSl                  = trs.Rmmse*reshape(trs.wfsSl,nSl*nNgs,nIter);
+        trs.tomoSl                  = trs.Rmmse*reshape(trs.wfsSl,nSl*nGs,nIter);
         trs.wfe.mmse                = getWaveFrontErrorFromSlopes(trs.tsSl - trs.tomoSl,S2Z);
     end
 end

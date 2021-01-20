@@ -20,9 +20,9 @@ dGs            = [pi/4 , 3*pi/4, 5*pi/4, 7*pi/4];
 magGs          = [9, 9, 9, 9];
 hGs            = 90e3; % source conjugation altitude in meters
 spotFwhm       = 1; % sport FWHM in arcsec
-nLayerNa       = 3;
+nLayerNa       = 0;
 naWeight       = ones(1,nLayerNa); %sodium profile
-naThickness    = 10e3;
+naThickness    = [];
 viewPoint      = [0,0]; %launch from the secondary mirror
 %4\ NGS WFS
 % wfs geometry

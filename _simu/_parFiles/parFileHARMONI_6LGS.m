@@ -20,9 +20,9 @@ dGs            = [0 , pi/3, 2*pi/3, pi, 4*pi/3, 5*pi/3];
 magGs          = [10, 10, 10, 10, 10, 10];
 hGs            = 90e3; % source conjugation altitude in meters
 spotFwhm       = 1; % sport FWHM in arcsec
-nLayerNa       = 3;
+nLayerNa       = 0;
 naWeight       = ones(1,nLayerNa); %sodium profile
-naThickness    = 10e3;
+naThickness    = [];
 viewPoint      = [-D/2,0]; %launch from the telescope side
 
 %4\ NGS WFS
