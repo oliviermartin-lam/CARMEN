@@ -1,7 +1,7 @@
 %1\ TELESCOPE
-D               = 39;       %telescope diameter in meter
-cobs            = 0.28;    % central obscuration ratio
-Fe              = 500;      % Phase screen upgrate rate in Hz
+D               = 8;       %telescope diameter in meter
+cobs            = 0.14;    % central obscuration ratio
+Fe              = 1000;      % Phase screen upgrate rate in Hz
 
 %2\ ATMOSPHERE - Test 1
 photoAtm        = photometry.V0;                    % photometric band to define atmospheric parameters V0->500nm
@@ -14,20 +14,25 @@ altitude        = [0, 4000., 10000., 15500.];
 
 
 %3\ NGSs
-photoNgs        = photometry.Na;                         % photometric band    640 nm
-rNgs            = [70.0, 70.0, 70.0, 70.0, 70.0, 70.0]*constants.arcsec2radian; % A47 asterism in the CANARY nomenclature
-dNgs            = [0 , 60, 120, 180, 240, 300];
-magNgs          = [10, 10, 10, 10, 10, 10];
-
+photoGs        = photometry.Na;                         % photometric band    640 nm
+rGs            = [17.5, 17.5, 17.5, 17.5]*constants.arcsec2radian; % A47 asterism in the CANARY nomenclature
+dGs            = [pi/4 , 3*pi/4, 5*pi/4, 7*pi/4];
+magGs          = [9, 9, 9, 9];
+hGs            = 90e3; % source conjugation altitude in meters
+spotFwhm       = 1; % sport FWHM in arcsec
+nLayerNa       = 3;
+naWeight       = ones(1,nLayerNa); %sodium profile
+naThickness    = 10e3;
+viewPoint      = [0,0]; %launch from the secondary mirror
 %4\ NGS WFS
 % wfs geometry
-nL              = 74;            %\# 1D lenselts
-nPx             = 6;           %1D \# pixels per lenslet
+nL              = 40;            %\# 1D lenselts
+nPx             = 8;           %1D \# pixels per lenslet
 nPxWfs          = nL*nPx;
 d               = D/nL;         %subaperture size
 minLightRatio   = 0.5;          % ratio of subap illumination to be valid
 wfsPscale       = 0;         % Pixel scale in arcsec
-lambdaOverd     = constants.radian2arcsec*photoNgs.wavelength/d;
+lambdaOverd     = constants.radian2arcsec*photoGs.wavelength/d;
 
 if wfsPscale == 0
     resTel          = nPx*nL;
@@ -46,12 +51,13 @@ else
     end
 end
 
-fovTel          = 2*max(rNgs)*constants.radian2arcsec;  % telescope fov ni arcsec.
+fovTel          = 2*max(rGs)*constants.radian2arcsec;  % telescope fov ni arcsec.
 ron             = 0.2; 	
-wfsQE           = 0.5;                                  % include detector quantum efficiency and throughput
+wfsQE           = 0.6;                                  % include detector quantum efficiency and throughput
 %5\ LOOP
 nIter           = 100;                                  %number of simulated frames
 nZern           = 100;
+
 %6\ TRAINING
 nScreens        = 5; %% TBC %%
 hmin            = 10;%minimal altitude

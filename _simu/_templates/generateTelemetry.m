@@ -1,4 +1,4 @@
-function trs = generateTelemetry(tel,atm,ngs,sref,wfs,ts,nIter,varargin)
+function trs = generateTelemetry(tel,atm,gs,sref,wfs,ts,nIter,varargin)
 inputs = inputParser;
 inputs.addRequired('tel', @(x) isa(x,'telescope'));
 inputs.addRequired('atm', @(x) isa(x,'atmosphere'));
@@ -12,7 +12,7 @@ inputs.addParameter('training', true,@islogical);
 inputs.addParameter('mmse', true,@islogical);
 inputs.addParameter('ron', 0,@isnumeric);
 inputs.addParameter('multicpu',true,@islogical);
-inputs.parse(tel,atm,ngs,sref,wfs,ts,nIter,varargin{:});
+inputs.parse(tel,atm,gs,sref,wfs,ts,nIter,varargin{:});
 
 training    = inputs.Results.training;
 mmse        = inputs.Results.mmse;
@@ -24,12 +24,12 @@ multicpu    = inputs.Results.multicpu;
 close all;
 tel     = tel + atm; %attach atmosphere to telescope
 sref    = sref.*tel*ts; %Define the light optical path for the Truth sensor;
-ngs     = ngs.*tel*wfs; %Define the light optical path for the Truth sensor;
+gs      = gs.*tel*wfs; %Define the light optical path for the Truth sensor;
 
 % Instantiate outputs
 % Slopes time-vector
 nSl     = size(wfs.slopes,1);
-nNgs    = numel(ngs);
+nNgs    = numel(gs);
 tsSl    = zeros(nSl,nIter);
 wfsSl   = zeros(nSl,nNgs,nIter);
 % WFSs camera
@@ -65,7 +65,7 @@ if multicpu && training
         opdTS(:,:,kIter) = s2.meanRmOpd;
         
         %3\ Propagating sources to the NGS WFS
-        n2 = times(ngs,tel)
+        n2 = times(gs,tel)
         n2 = mtimes(n2,wfs)
         %store slopes and pixels
         wfsSl(:,:,kIter) = wfs.slopes;
@@ -96,7 +96,7 @@ else
         opdTS(:,:,kIter) = s2.meanRmOpd;
         
         %3\ Propagating sources to the NGS WFS
-        n2 = times(ngs,tel);
+        n2 = times(gs,tel);
         n2 = mtimes(n2,wfs);
         %store slopes and pixels
         wfsSl(:,:,kIter) = wfs.slopes;
@@ -121,7 +121,7 @@ if ~isempty(S2Z)
     trs.wfe.uncorrected_th  = sqrt(1.03*(tel.D/atm.r0)^(5/3))*atm.wavelength*1e9/2/pi;
     %2\ MMSE
     if mmse
-        [trs.Rmmse,trs.wfe.mmse_th] = getMMSE(tel,atm,ngs,wfs,sref,S2Z);
+        [trs.Rmmse,trs.wfe.mmse_th] = getMMSE(tel,atm,gs,wfs,sref,S2Z);
         trs.tomoSl                  = trs.Rmmse*reshape(trs.wfsSl,nSl*nNgs,nIter);
         trs.wfe.mmse                = getWaveFrontErrorFromSlopes(trs.tsSl - trs.tomoSl,S2Z);
     end

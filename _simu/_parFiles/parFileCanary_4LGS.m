@@ -4,7 +4,7 @@ cobs 	= 0.285; % central obscuration ratio
 Fe      = 150; % Phase screen upgrate rate in Hz
 
 
-%2\ ATMOSPHERE - Test 1
+%2\ ATMOSPHERE 
 photoAtm        = photometry.V0;      % photometric band to define atmospheric parameters V0->500nm
 windSpeed       = [7.5, 12.5, 15., 20.];       % wind speed vector in m/s
 windDirection	= [0, 11*pi/6, 3*pi/4, 4*pi/3];    % wind direction vector in rad
@@ -13,31 +13,18 @@ r0           	= 0.16;                         % coherence lenght in meters at 50
 fractionalR0 	= [65,15,10,10]/100.; % fractional weight of turbulent layers
 altitude        = [0, 4000., 10000., 15500.];
 
-%2\ ATMOSPHERE - Test 2
-photoAtm        = photometry.V0;      % photometric band to define atmospheric parameters V0->500nm
-windSpeed       = [7.5, 12.5, 15., 20.];       % wind speed vector in m/s
-windDirection	= [0, 11*pi/6, 3*pi/4, 4*pi/3];    % wind direction vector in rad
-L0           	= [25 25 25 25];         % Outer scale in meters
-r0           	= 0.12;                         % coherence lenght in meters at 500 nm
-fractionalR0 	= [45,15,30,10]/100.; % fractional weight of turbulent layers
-altitude        = [0, 2500., 4000., 13500.];
-
-%2\ ATMOSPHERE - Test 3
-photoAtm        = photometry.V0;      % photometric band to define atmospheric parameters V0->500nm
-windSpeed       = [10., 15., 17.5, 25.];       % wind speed vector in m/s
-windDirection	= [0, 11*pi/6, 3*pi/4, 4*pi/3];    % wind direction vector in rad
-L0           	= [25 25 25 25];         % Outer scale in meters
-r0           	= 0.085;                         % coherence lenght in meters at 500 nm
-fractionalR0 	= [80,5,10,5]/100.; % fractional weight of turbulent layers
-altitude        = [0, 6500., 10000., 15500.];
 
 %3\ NGSs
-photoGs        = photometry.R;                % photometric band    640 nm
-rGs            = [40.6 53 47.9]*constants.arcsec2radian; % A47 asterism in the CANARY nomenclature
-dGs            = [pi/4 pi/2+pi/6,pi+pi/3];
-magGs          = [10.2 8.7 9.9];
-hGs            = 0;
-
+photoGs        = photometry.Na;                % photometric band    640 nm
+rGs            = [23, 23, 23, 23]*constants.arcsec2radian; % A47 asterism in the CANARY nomenclature
+dGs            = [0, pi/2, pi, 3*pi/2];
+magGs          = [10, 10, 10, 10];
+hGs            = 22.5e3;
+spotFwhm       = 1; % sport FWHM in arcsec
+nLayerNa       = 0;
+naWeight       = ones(1,nLayerNa); %sodium profile
+naThickness    = [];
+viewPoint      = [0,0]; %launch from the secondary mirror
 
 %4\ NGS WFS
 % wfs geometry
@@ -47,7 +34,7 @@ nPxWfs          = nL*nPx;
 d               = D/nL; %subaperture size
 minLightRatio   = 0.5; % ratio of subap illumination to be valid
 nyquistFlag     = false;
-wfsPscale       = 0.22;% Pixel scale in arcsec in NGS Vidal et. al. 2014
+wfsPscale       = 0.47;% Pixel scale in arcsec for LGS WFS - Morris 2014
 fovWfs          = wfsPscale*nPx; %WFS field of view in arcsec, must be close to 4"
 % Calculate the number of pixels to get the closest pixel scale
 lambdaOverd     = constants.radian2arcsec*photoGs.wavelength/d;
