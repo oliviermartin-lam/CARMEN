@@ -115,14 +115,16 @@ trs.opdNGS = opdNGS;
 
 %% 3\ UPDATE RESULTS STRUCTURE
 %1\ Wavefront errors
-trs.wfe = [];
-trs.wfe.uncorrected     = getWaveFrontErrorFromSlopes_CANARY(tsSl);
-trs.wfe.uncorrected_th  = sqrt(1.03*(tel.D/atm.r0)^(5/3))*atm.wavelength*1e9/2/pi;
-%2\ MMSE
-if mmse
-    [trs.Rmmse,trs.wfe.mmse_th] = getMMSE_CANARY(tel,atm,ngs,wfs,sref,S2Z);
-    trs.tomoSl                  = trs.Rmmse*reshape(trs.wfsSl,nSl*nNgs,nIter);
-    trs.wfe.mmse                = getWaveFrontErrorFromSlopes_CANARY(trs.tsSl - trs.tomoSl);     
+if ~isempty(S2Z)
+    trs.wfe = [];
+    trs.wfe.uncorrected     = getWaveFrontErrorFromSlopes_CANARY(tsSl);
+    trs.wfe.uncorrected_th  = sqrt(1.03*(tel.D/atm.r0)^(5/3))*atm.wavelength*1e9/2/pi;
+    %2\ MMSE
+    if mmse
+        [trs.Rmmse,trs.wfe.mmse_th] = getMMSE_CANARY(tel,atm,ngs,wfs,sref,S2Z);
+        trs.tomoSl                  = trs.Rmmse*reshape(trs.wfsSl,nSl*nNgs,nIter);
+        trs.wfe.mmse                = getWaveFrontErrorFromSlopes_CANARY(trs.tsSl - trs.tomoSl);
+    end
 end
 
 
