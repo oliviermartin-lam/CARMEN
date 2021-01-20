@@ -27,17 +27,23 @@ nPxWfs          = nL*nPx;
 d               = D/nL;         %subaperture size
 minLightRatio   = 0.5;          % ratio of subap illumination to be valid
 wfsPscale       = 0;         % Pixel scale in arcsec
+lambdaOverd     = constants.radian2arcsec*photoNgs.wavelength/d;
 
 if wfsPscale == 0
-    resTel          = nPx*nL/2;
+    resTel          = nPx*nL;
+    wfsPscale       = lambdaOverd/2;
+    nyquistFlag     = true;
 else
+    nyquistFlag     = false;
     fovWfs          = wfsPscale*nPx; %WFS field of view in arcsec
-    
     % Calculate the number of pixels to get the closest pixel scale
-    lambdaOverd     = constants.radian2arcsec*photoNgs.wavelength/d;
     fovWfsinlod     = floor(fovWfs/lambdaOverd);            % WFS fov in l/d units
     Samp            = lambdaOverd/wfsPscale;                % WFS sampling;
-    resTel          = nPx*nL*round(1/Samp);                 % \# pixels within the pupil
+    if Samp < 1
+        resTel      = nPx*nL*round(1/Samp);                 % \# pixels within the pupil
+    else
+        resTel      = nPx*nL;
+    end
 end
 
 fovTel          = 2*max(rNgs)*constants.radian2arcsec;  % telescope fov ni arcsec.
@@ -45,6 +51,7 @@ ron             = 0.2;
 wfsQE           = 0.6;                                  % include detector quantum efficiency and throughput
 %5\ LOOP
 nIter           = 100;                                  %number of simulated frames
+nZern           = 100;
 
 %6\ TRAINING
 nScreens        = 5; %% TBC %%

@@ -1,4 +1,4 @@
-function [Rmmse,wfeTomo,Cee] = getMMSE_CANARY(tel,atm,ngs,wfs,sref,S2Z)
+function [Rmmse,wfeTomo,Cee] = getMMSE(tel,atm,ngs,wfs,sref,S2Z)
 
 if ~any([atm.layer.altitude])
     cond = 1e3;

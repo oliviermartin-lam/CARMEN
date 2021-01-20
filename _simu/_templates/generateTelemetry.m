@@ -33,7 +33,7 @@ nNgs    = numel(ngs);
 tsSl    = zeros(nSl,nIter);
 wfsSl   = zeros(nSl,nNgs,nIter);
 % WFSs camera
-nPx     = wfs.camera.resolution(1);
+nPx     = ts.camera.resolution(1);
 tsCam   = zeros(nPx,nPx,nIter);
 wfsCam  = zeros(nPx,nPx*nNgs,nIter);
 % Optical phase difference map
@@ -117,13 +117,13 @@ trs.opdNGS = opdNGS;
 %1\ Wavefront errors
 if ~isempty(S2Z)
     trs.wfe = [];
-    trs.wfe.uncorrected     = getWaveFrontErrorFromSlopes_CANARY(tsSl);
+    trs.wfe.uncorrected     = getWaveFrontErrorFromSlopes(tsSl,S2Z);
     trs.wfe.uncorrected_th  = sqrt(1.03*(tel.D/atm.r0)^(5/3))*atm.wavelength*1e9/2/pi;
     %2\ MMSE
     if mmse
-        [trs.Rmmse,trs.wfe.mmse_th] = getMMSE_CANARY(tel,atm,ngs,wfs,sref,S2Z);
+        [trs.Rmmse,trs.wfe.mmse_th] = getMMSE(tel,atm,ngs,wfs,sref,S2Z);
         trs.tomoSl                  = trs.Rmmse*reshape(trs.wfsSl,nSl*nNgs,nIter);
-        trs.wfe.mmse                = getWaveFrontErrorFromSlopes_CANARY(trs.tsSl - trs.tomoSl);
+        trs.wfe.mmse                = getWaveFrontErrorFromSlopes(trs.tsSl - trs.tomoSl,S2Z);
     end
 end
 
