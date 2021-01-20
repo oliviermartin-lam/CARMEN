@@ -17,7 +17,7 @@ smean = mean(slopes,2);
 s_rmmean = bsxfun(@minus,slopes,smean);%subtract the temporal average
 
 %Zernike decomposition
-z_mean = S2Z*smean; % coefficient of the averaged centroids 35x1
+z_mean = S2Z*squeeze(smean); % coefficient of the averaged centroids 35x1
 z_rmmean = S2Z*s_rmmean; % mean-removed 35x2048
 
 %Get wfe errors
