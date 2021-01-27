@@ -74,9 +74,9 @@ if multicpu && ~frozenflow
         
         %3\ Propagating sources to the NGS WFS
         n2 = times(gs,tel);
-%        if numel({n2.height}) ~= nGs % case with a thick sodium layer
-%           error('The Na profilecase is not yet managed');
-%        end
+        if numel({n2.height}) ~= nGs % case with a thick sodium layer
+           error('The Na profilecase is not yet managed');
+        end
         n2 = mtimes(n2,wfs);
         %store slopes and pixels
         wfsSl(:,:,kIter)    = wfs.slopes;
