@@ -7,6 +7,7 @@ inputs.addRequired('sref',@(x) isa(x,'source'));
 inputs.addRequired('wfs', @(x) isa(x,'shackHartmann'));
 inputs.addRequired('ts', @(x) isa(x,'shackHartmann'));
 inputs.addRequired('nIter', @isnumeric);
+inputs.addParameter('gsRef', [],@(x) isa(x,'source'));
 inputs.addParameter('S2Z', [],@isnumeric);
 inputs.addParameter('P2Z', [],@isnumeric);
 inputs.addParameter('frozenflow', false,@islogical);
@@ -23,6 +24,7 @@ S2Z         = inputs.Results.S2Z;
 P2Z         = inputs.Results.P2Z;
 multicpu    = inputs.Results.multicpu;
 getZernike  = inputs.Results.getZernike;
+gsRef       = inputs.Results.gsRef;
 
 %% 1\ INIT
 close all;
@@ -43,7 +45,7 @@ tsCam   = zeros(nPx,nPx,nIter);
 wfsCam  = zeros(nPx,nPx*nGs,nIter);
 % Optical phase difference map
 opdTS   = zeros(tel.resolution,tel.resolution,nIter);
-opdNGS  = zeros(tel.resolution,tel.resolution,nGs,nIter);
+opdGS  = zeros(tel.resolution,tel.resolution,nGs,nIter);
 
 %Enable readout and photon noise
 if ron
@@ -74,14 +76,17 @@ if multicpu && ~frozenflow
         
         %3\ Propagating sources to the NGS WFS
         n2 = times(gs,tel);
-        if numel({n2.height}) ~= nGs % case with a thick sodium layer
-           error('The Na profilecase is not yet managed');
-        end
         n2 = mtimes(n2,wfs);
+        
+        if ~isempty(gsRef)
+            n3 = times(gsRef,tel);
+            opdGS(:,:,:,kIter) = reshape([n3.meanRmOpd],tel.resolution,tel.resolution,nGs);
+        end
+        
         %store slopes and pixels
         wfsSl(:,:,kIter)    = wfs.slopes;
         wfsCam(:,:,kIter)   = wfs.camera.frame;
-        opdNGS(:,:,:,kIter) = reshape([n2.meanRmOpd],tel.resolution,tel.resolution,nGs);
+        
     end
     
 else
@@ -112,7 +117,7 @@ else
         %store slopes and pixels
         wfsSl(:,:,kIter) = wfs.slopes;
         wfsCam(:,:,kIter) = wfs.camera.frame;
-        opdNGS(:,:,:,kIter) = reshape([n2.meanRmOpd],tel.resolution,tel.resolution,nGs);
+        opdGS(:,:,:,kIter) = reshape([n2.meanRmOpd],tel.resolution,tel.resolution,nGs);
     end
 end
 
@@ -122,7 +127,7 @@ trs.tsCam  = tsCam;
 trs.opdTS  = opdTS;
 trs.wfsSl  = wfsSl;
 trs.wfsCam = wfsCam;
-trs.opdNGS = opdNGS;
+trs.opdGS  = opdGS;
 
 %% 3\ UPDATE RESULTS STRUCTURE
 if ~isempty(S2Z)
@@ -147,7 +152,7 @@ if ~isempty(S2Z)
         trs.zer.wfs_truth = zeros(nGs,nZer,nIter);
         trs.zer.wfs_rec   = zeros(nGs,nZer,nIter);
         for n = 1:nGs
-            trs.zer.wfs_truth(n,:,:) = P2Z * sref.waveNumber*reshape(squeeze(opdNGS(:,:,n,:)),nPx^2,nIter);
+            trs.zer.wfs_truth(n,:,:) = P2Z * sref.waveNumber*reshape(squeeze(opdGS(:,:,n,:)),nPx^2,nIter);
             trs.zer.wfs_rec(n,:,:)   = S2Z * squeeze(wfsSl(:,n,:));
         end
         % TOMOGRAPHY

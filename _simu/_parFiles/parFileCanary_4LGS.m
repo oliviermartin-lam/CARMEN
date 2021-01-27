@@ -84,5 +84,5 @@ fractionalR0_training = [0.5,0.5];
 
 %7\ OBS
 profileConfig = 'typical'; %typical, calm or variable
-nL_c = 4; % number of layers
+nL_c = 6; % number of layers
 dt   = 5; %in minutes

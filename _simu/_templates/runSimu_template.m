@@ -59,6 +59,7 @@ sref = source('wavelength',photoGs);
 if hGs == 0
     % NATURAL GUIDE STAR
     gs      = source('magnitude',magGs,'zenith',rGs,'azimuth',dGs,'wavelength',photoGs);
+    gsRef   = [];
 else
     % LASER GUIDE STAR
     nPhoton = mean(photoGs.zeroPoint*10.^(-0.4*magGs));
@@ -70,6 +71,7 @@ else
     end
     gs      = laserGuideStar(tel.D/nL,tel.D,hGs,spotFwhm,nPhoton,naWeight/sum(naWeight),'zenith',rGs,'azimuth',dGs,'height',...
         hNa,'wavelength',photoGs,'viewPoint',viewPoint);
+    gsRef   = source('magnitude',magGs,'zenith',rGs,'azimuth',dGs,'wavelength',photoGs);
     
      % lgs = laserGuideStar(apertureSize,apertureDistance,...
     %        meanAltitude,fwhmInArcsec,nPhoton,naDensityProfile,sourceParams)
@@ -225,7 +227,7 @@ switch dataType
                 'altitude',[0,alt(l)*1e3],'windSpeed',10*ones(1,2),'windDirection',zeros(1,2));
             t0  = tic();
             trs = generateTelemetry(tel,atm,gs,sref,wfs,ts,nIter,'frozenflow',false,'ron',ron,...
-                'mmse',flagMMSE,'S2Z',S2Z,'P2Z',P2Z,'getZernike',getZernike);
+                'mmse',flagMMSE,'S2Z',S2Z,'P2Z',P2Z,'getZernike',getZernike,'gsRef',gsRef);
             tf  = toc(t0);
             fprintf('Done in %.1f s',tf)
             
@@ -248,8 +250,8 @@ switch dataType
         
         % GENERATING TEST TIME_SERIES FOR A SPECIFIC ATMOSPHERE
         t0  = tic();
-        trs = generateTelemetry(tel,atm,gs,sref,wfs,ts,nIter,'frozenflow',false,'ron',ron,...
-            'mmse',flagMMSE,'S2Z',S2Z,'P2Z',P2Z,'getZernike',getZernike);
+        trs = generateTelemetry(tel,atm,gs,sref,wfs,ts,10,'frozenflow',false,'ron',ron,...
+            'mmse',flagMMSE,'S2Z',S2Z,'P2Z',P2Z,'getZernike',getZernike,'gsRef',gsRef);
         tf  = toc(t0);
         fprintf('Done in %.1f s\n',tf)
         
@@ -295,7 +297,7 @@ switch dataType
             % GENERATING TELEMETRY
             t0  = tic();
             trs = generateTelemetry(tel,atm,gs,sref,wfs,ts,nIter,'frozenflow',false,'ron',ron,...
-                'mmse',false,'S2Z',S2Z,'P2Z',P2Z,'getZernike',getZernike);
+                'mmse',false,'S2Z',S2Z,'P2Z',P2Z,'getZernike',getZernike,'gsRef',gsRef);
             tf  = toc(t0);
             fprintf('Done in %.1f s\n',tf)
             
