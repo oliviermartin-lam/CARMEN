@@ -201,11 +201,14 @@ classdef telescopeAbstract < handle
             end
         end
         
-        function draw(obj)
+        function draw(obj,rngStream)
             %% DRAW Reset the atmosphere phase screens
             %
             % draw(obj) reet the phase screens of the layers
             
+            if nargin < 2
+                rngStream = obj.atm.rngStream;
+            end
             for kLayer=1:obj.atm.nLayer
                 m_atm = slab(obj.atm,kLayer);
                 %                 fprintf('   Layer %d:\n',kLayer)
@@ -214,7 +217,7 @@ classdef telescopeAbstract < handle
                 
                 
                 Z = obj.atm.layer(kLayer).phase(obj.innerMask{kLayer}(2:end-1,2:end-1));
-                X = obj.A{kLayer}*Z + obj.B{kLayer}*randn(obj.atm.rngStream,size(obj.B{kLayer},2),1);
+                X = obj.A{kLayer}*Z + obj.B{kLayer}*randn(rngStream,size(obj.B{kLayer},2),1);
                 obj.mapShift{kLayer}(obj.outerMask{kLayer})  = X;
                 obj.mapShift{kLayer}(~obj.outerMask{kLayer}) = obj.atm.layer(kLayer).phase(:);
                             

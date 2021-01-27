@@ -1,4 +1,4 @@
-function S2Z = calibrateZernikeReconstructionMatrix(tel,wfs,sref,varargin)
+function [S2Z,P2Z] = calibrateZernikeReconstructionMatrix(tel,wfs,sref,varargin)
 inputs = inputParser;
 inputs.addRequired('tel', @(x) isa(x,'telescope'));
 inputs.addRequired('wfs', @(x) isa(x,'shackHartmann'));
@@ -27,3 +27,6 @@ dmCalib.nThresholded    = nThresholded;
 
 % Zernike reconstruction matrix in pixels/nm
 S2Z = -2e9*dmCalib.M;
+
+% Zernike projector from phase
+P2Z = sref.wavelength*1e9/2/pi*pinv(zer.modes);

@@ -12,18 +12,30 @@ else
 end
 
 path_oomao      = [path_carmen,'_libOomao/']; % the oomao path
-path_simu       = [path_carmen,'_simu']; % the simulation folder path
-path_processing = [path_carmen,'_dataprocessing']; % the simulation folder path
-
-addpath(genpath(path_oomao),genpath(path_simu),genpath(path_processing));
+path_simu       = [path_carmen,'_simu/']; % the simulation folder path
+path_processing = [path_carmen,'_dataprocessing/']; % the simulation folder path
+path_scidar     = [path_carmen,'_scidar/']; % the directory containing Scidar data
+addpath(genpath(path_oomao),genpath(path_simu),genpath(path_processing),path_scidar);
 
 %% MANAGE OPTIONS
-flagMMSE        = false; %% TBC %%
-flagTraining    = true; %% TBC %%
-flagNoise       = false; %% TBC %%
-flagSave        = true;
-simuCase        = 'AOF_4LGS'; % TBC
+dataType  = 'test'; 
+% Can be : 
 
+% training : 2-layers atmosphere with a variable-altitude for the second layer. The altitude is linearly dsampled from hmin to hmax using nScreens values (parFile).
+% Do nIter independent simulations (defined in parFile) of slopes
+
+% test : user-defined atmosphere (defined in parFile). Simulate time-series  (frozen-flow turbulence) of slopes for a specific atmosphere
+
+% obs : Stereo-scidar-based simulations. The user must define the temporal
+% resolution and the number of reconstructed layers (parFile). Simulate nBins time-series of slopes
+
+flagNoise = false; %% TBC %%
+flagSave  = false;
+simuCase  = 'Canary_4LGS'; % TBC
+flagDisp  = false; % if true, some figures will pop up
+frozenflow= false; % if true, the code simulates temporally correlated time-series of slopes accounting for the frozen-flow assumption
+getZernike= false; % if true, reconstruct Zernike coefficients from phase/slopes
+flagMMSE  = false; %% TBC %%
 
 %% DEFINING FIXED SIMULATION PARAMETERS
 % read the parameters file
@@ -56,7 +68,7 @@ else
         naWeight= 1;
         hNa     = hGs;
     end
-    gs      = laserGuideStar(tel.D/nL,tel.D,hGs,spotFwhm,nPhoton,naWeight,'zenith',rGs,'azimuth',dGs,'height',...
+    gs      = laserGuideStar(tel.D/nL,tel.D,hGs,spotFwhm,nPhoton,naWeight/sum(naWeight),'zenith',rGs,'azimuth',dGs,'height',...
         hNa,'wavelength',photoGs,'viewPoint',viewPoint);
     
      % lgs = laserGuideStar(apertureSize,apertureDistance,...
@@ -83,15 +95,16 @@ else
 end
 nGs    = numel(gs);
 %check where sources are in polar coordinates
-figure;
-pp = gs.polar; 
-for i=1:nGs
-    pp(i).MarkerFaceColor = 'b';
-    pp(i).MarkerSize= 10;
-    pp(i).Marker= 'o';
-    pp(i).Color   = 'b';
+if flagDisp
+    figure;
+    pp = gs.polar;
+    for i=1:nGs
+        pp(i).MarkerFaceColor = 'b';
+        pp(i).MarkerSize= 10;
+        pp(i).Marker= 'o';
+        pp(i).Color   = 'b';
+    end
 end
-
                     
 %4\ TS WFS
 ts = shackHartmann(nL,tel.resolution,minLightRatio);
@@ -139,49 +152,59 @@ atm   = atmosphere(photoGs,r0,mean(L0),'layeredL0',L0,'fractionnalR0',fractional
 
 
 %% ZERNIKE RECONSTRUCTION MATRIX
-%psTS = 0.219245;
-%S2Z =  (0.5 * 4.2 * 1e9 * psTS / (3600.*180./pi)) * fitsread('GLOB_mrz_7x7.fits')'; %in nm
 
-% note: should it be sref or gs ? I think we want to reconstruc tthe
-% Zernike modes from an observation of the Truth sensor slopes that must
-% mimic a SH WFS looking at an NGS
-
-S2Z   = calibrateZernikeReconstructionMatrix(tel,ts,sref,'nModes',nZern,'amp',sref.wavelength/40);
+% FROM SHACK-HARTMAN WFS SLOPES/PHASE TO ZERNIKE COEFFICIENTS
+[S2Z,P2Z]   = calibrateZernikeReconstructionMatrix(tel,ts,sref,'nModes',nZern,'amp',sref.wavelength/40);
 close all;
 
-% -------------------- plot linearity curves
-jIndex      = [2,4,10,nZern];
-z           = zernike(jIndex,'resolution',tel.resolution,'D',tel.D);
-nTest       = 20;
-zMax        = 1e3;
-nZernTest   = numel(jIndex);
-zTrue       = linspace(-zMax,zMax,nTest);
-z_rec       = zeros(nZernTest,nTest);
-for k = 1:nTest
-    for j=1:nZernTest
-        ph          = reshape(z.modes(:,j)*2*pi*zTrue(k)*1e-9/sref.wavelength,tel.resolution,[]);
-        sref        = sref.*tel;
-        sref.phase  = ph;
-        sref        = sref*ts;
-        z_rec(j,k)  = S2Z(jIndex(j)-1,:)* ts.slopes;
+if flagDisp
+    % -------------------- plot linearity curves
+    jIndex      = [2,4,10,nZern];
+    z           = zernike(jIndex,'resolution',tel.resolution,'D',tel.D);
+    nTest       = 20;
+    zMax        = 1e3;
+    nZernTest   = numel(jIndex);
+    zTrue       = linspace(-zMax,zMax,nTest);
+    z_rec1      = zeros(nZernTest,nTest);
+    z_rec2      = zeros(nZernTest,nTest);
+    for k = 1:nTest
+        for j=1:nZernTest
+            ph          = reshape(z.modes(:,j)*2*pi*zTrue(k)*1e-9/sref.wavelength,tel.resolution,[]);
+            sref        = sref.*tel;
+            sref.phase  = ph;
+            sref        = sref*ts;
+            z_rec1(j,k) = S2Z(jIndex(j)-1,:)* ts.slopes;
+            z_rec2(j,k) = P2Z(jIndex(j)-1,:)*ph(:);
+        end
     end
+    
+
+    figure;
+    plot(zTrue,z_rec1(1,:),'ks--','MarkerFaceColor','k','MarkerSize',5);hold on;
+    plot(zTrue,z_rec1(2,:),'bo--','MarkerFaceColor','b','MarkerSize',5);
+    plot(zTrue,z_rec1(3,:),'rd--','MarkerFaceColor','r','MarkerSize',5);
+    plot(zTrue,z_rec1(4,:),'mh--','MarkerFaceColor','m','MarkerSize',5);
+    xlabel('Ground truth (nm)','interpreter','latex','fontsize',20);
+    ylabel('Slopes-based Reconstruction (nm)','interpreter','latex','fontsize',20);
+    set(gca,'FontSize',20,'FontName','cmr12','TickLabelInterpreter','latex' );
+    legend({'j=2','j=4','j=10',sprintf('j=%d',nZern)},'interpreter','latex','FontSize',18,'Location','northwest');
+    
+    figure;
+    plot(zTrue,z_rec2(1,:),'ks--','MarkerFaceColor','k','MarkerSize',5);hold on;
+    plot(zTrue,z_rec2(2,:),'bo--','MarkerFaceColor','b','MarkerSize',5);
+    plot(zTrue,z_rec2(3,:),'rd--','MarkerFaceColor','r','MarkerSize',5);
+    plot(zTrue,z_rec2(4,:),'mh--','MarkerFaceColor','m','MarkerSize',5);
+    xlabel('Ground truth (nm)','interpreter','latex','fontsize',20);
+    ylabel('Phase-based Reconstruction (nm)','interpreter','latex','fontsize',20);
+    set(gca,'FontSize',20,'FontName','cmr12','TickLabelInterpreter','latex' );
+    legend({'j=2','j=4','j=10',sprintf('j=%d',nZern)},'interpreter','latex','FontSize',18,'Location','northwest');
+    
 end
-
-figure;
-plot(zTrue,z_rec(1,:),'ks--','MarkerFaceColor','k','MarkerSize',5);hold on;
-plot(zTrue,z_rec(2,:),'bo--','MarkerFaceColor','b','MarkerSize',5);
-plot(zTrue,z_rec(3,:),'rd--','MarkerFaceColor','r','MarkerSize',5);
-plot(zTrue,z_rec(4,:),'mh--','MarkerFaceColor','m','MarkerSize',5);
-xlabel('Ground truth (nm)','interpreter','latex','fontsize',20);
-xlabel('Reconstruction (nm)','interpreter','latex','fontsize',20);
-set(gca,'FontSize',20,'FontName','cmr12','TickLabelInterpreter','latex' );
-legend({'j=2','j=4','j=10',sprintf('j=%d',nZern)},'interpreter','latex','FontSize',18,'Location','northwest');
-
 
 %% CREATING SAVING FOLDERS
 if flagSave
-    st = {'WFS_CAM','WFS_SLOPES','TS_CAM','TS_SLOPES','TOMO_SLOPES'};
-    saveDir = [path_res,upper(simuCase),'/'];
+    st = {'WFS_CAM','WFS_SLOPES','TS_CAM','TS_SLOPES','TOMO_SLOPES','ZERNIKE_COEFFICIENTS'};
+    saveDir = [path_res,upper(simuCase),'/',dataType,'/'];
     for k=1:numel(st)
         path = [saveDir,st{k}];
         if ~isfolder(path)
@@ -190,96 +213,178 @@ if flagSave
     end
 end
 %% RUN THE END-TO-END SIMULATION
-if flagTraining
-    alt = linspace(hmin/1e3,hmax/1e3,nScreens);
-end
-%If flagTraining = false, the atmosphere is defined in parFileCanary_3NGS
 
 
-for l=1:nScreens
-    % GENERATE TELEMETRY
-    if flagTraining
-        %if training, update the altitude
-        atm = atmosphere(photoGs,r0,mean(L0_training),'layeredL0',L0_training,'fractionnalR0',fractionalR0_training,...
-            'altitude',[0,alt(l)*1e3],'windSpeed',10*ones(1,2),'windDirection',zeros(1,2));
-    end
+switch dataType
     
-    t0  = tic();
-    trs = generateTelemetry(tel,atm,gs,sref,wfs,ts,nIter,'training',flagTraining,'ron',ron,'mmse',flagMMSE,'S2Z',S2Z);
-    tf  = toc(t0);
-    sprintf('Done in %.1f s',tf)
-    
-    % SAVE TELEMETRY
-    if flagSave
-        fitswrite(trs.wfsSl,[saveDir,'WFS_SLOPES/offaxiswfss_slopes_',num2str(atm.layer(2).altitude),'km_noise_',num2str(flagNoise),'.fits']);
-        fitswrite(trs.tsSl,[saveDir,'TS_SLOPES/ts_slopes_',num2str(atm.layer(2).altitude),'km_noise_',num2str(flagNoise),'.fits']);
-        fitswrite(trs.wfsCam,[saveDir,'WFS_CAM/offaxiswfss_cam_',num2str(atm.layer(2).altitude),'km_noise_',num2str(flagNoise),'.fits']);
-        fitswrite(trs.tsCam,[saveDir,'TS_CAM/ts_slopes_',num2str(atm.layer(2).altitude),'km_noise_',num2str(flagNoise),'.fits']);
-        if flagMMSE
-            fitswrite(trs.tomoSl,[saveDir,'TOMO_SLOPES/tomo_slopes_',num2str(atm.layer(2).altitude),'km_noise_',num2str(flagNoise),'.fits']);
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    case 'training'
+        alt = linspace(hmin/1e3,hmax/1e3,nScreens);
+        for l=1:nScreens
+            atm = atmosphere(photoGs,r0,mean(L0_training),'layeredL0',L0_training,'fractionnalR0',fractionalR0_training,...
+                'altitude',[0,alt(l)*1e3],'windSpeed',10*ones(1,2),'windDirection',zeros(1,2));
+            t0  = tic();
+            trs = generateTelemetry(tel,atm,gs,sref,wfs,ts,nIter,'frozenflow',false,'ron',ron,...
+                'mmse',flagMMSE,'S2Z',S2Z,'P2Z',P2Z,'getZernike',getZernike);
+            tf  = toc(t0);
+            fprintf('Done in %.1f s',tf)
+            
+            
+            if flagSave
+                fitswrite(trs.wfsSl,[saveDir,'WFS_SLOPES/offaxiswfss_slopes_',num2str(atm.layer(2).altitude),'km_noise_',num2str(flagNoise),'.fits']);
+                fitswrite(trs.tsSl,[saveDir,'TS_SLOPES/ts_slopes_',num2str(atm.layer(2).altitude),'km_noise_',num2str(flagNoise),'.fits']);
+                fitswrite(trs.wfsCam,[saveDir,'WFS_CAM/offaxiswfss_cam_',num2str(atm.layer(2).altitude),'km_noise_',num2str(flagNoise),'.fits']);
+                fitswrite(trs.tsCam,[saveDir,'TS_CAM/ts_slopes_',num2str(atm.layer(2).altitude),'km_noise_',num2str(flagNoise),'.fits']);
+                if flagMMSE
+                    fitswrite(trs.tomoSl,[saveDir,'TOMO_SLOPES/tomo_slopes_',num2str(atm.layer(2).altitude),'km_noise_',num2str(flagNoise),'.fits']);
+                end
+            end
         end
-    end
-    
-    if isfield(trs,'wfe')
-        trs.wfe.uncorrected
-        trs.wfe.uncorrected_th
-        if flagMMSE
-            trs.wfe.mmse
+        
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        
+    case 'test'
+        
+        % GENERATING TEST TIME_SERIES FOR A SPECIFIC ATMOSPHERE
+        t0  = tic();
+        trs = generateTelemetry(tel,atm,gs,sref,wfs,ts,nIter,'frozenflow',false,'ron',ron,...
+            'mmse',flagMMSE,'S2Z',S2Z,'P2Z',P2Z,'getZernike',getZernike);
+        tf  = toc(t0);
+        fprintf('Done in %.1f s\n',tf)
+        
+        if ~exist('atmName','var')
+            atmName = 'noname';
         end
-    end
+        if flagSave
+            fitswrite(trs.wfsSl,[saveDir,'WFS_SLOPES/offaxiswfss_slopes_',atmName,'_noise_',num2str(flagNoise),'.fits']);
+            fitswrite(trs.tsSl,[saveDir,'TS_SLOPES/ts_slopes_',atmName,'_noise_',num2str(flagNoise),'.fits']);
+            fitswrite(trs.wfsCam,[saveDir,'WFS_CAM/offaxiswfss_cam_',atmName,'_noise_',num2str(flagNoise),'.fits']);
+            fitswrite(trs.tsCam,[saveDir,'TS_CAM/ts_slopes_',atmName,'_noise_',num2str(flagNoise),'.fits']);
+            if flagMMSE
+                fitswrite(trs.tomoSl,[saveDir,'TOMO_SLOPES/tomo_slopes_',num2str(atm.nLayer),'layers_noise_',num2str(flagNoise),'.fits']);
+            end
+        end
+        
+        if isfield(trs,'wfe')
+            trs.wfe.uncorrected
+            trs.wfe.uncorrected_th
+            if flagMMSE
+                trs.wfe.mmse
+            end
+        end
+        
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        
+    case 'obs'
+        % GET CN2 PROFILES
+        [Cn2_c,alt_c,r0,date_bin]  = readScidarData(path_scidar,profileConfig,dt,nL_c,photoGs.wavelength,flagDisp);
+        nBin   = size(Cn2_c,2);
+        vmean  = mean(windSpeed);
+        
+        % SIMULATING TIME-SERIES FOR EACH PROFILE
+        for kBin = 1:nBin
+            % UPDATING ATMOSPHERE
+            idGood = Cn2_c(kBin,:) ~=0;
+            wK     = Cn2_c(kBin,idGood);
+            wK     = wK/sum(wK);
+            atm   = atmosphere(photoGs,r0(kBin),mean(L0),'layeredL0',mean(L0),'fractionnalR0',wK,...
+                'altitude',alt_c(kBin,idGood),'windSpeed',vmean*ones(1,nL_c),'windDirection',zeros(1,nL_c));
+            
+            % GENERATING TELEMETRY
+            t0  = tic();
+            trs = generateTelemetry(tel,atm,gs,sref,wfs,ts,nIter,'frozenflow',false,'ron',ron,...
+                'mmse',false,'S2Z',S2Z,'P2Z',P2Z,'getZernike',getZernike);
+            tf  = toc(t0);
+            fprintf('Done in %.1f s\n',tf)
+            
+            %MMSE RECONSTRUCTOR
+            if flagMMSE
+                if kBin == 1
+                    Rmmse = getMMSE(tel,atm,gs,wfs,sref,S2Z);
+                end
+                trs.tomoSl = Rmmse*reshape(trs.wfsSl,nSl*nGs,nIter);
+            end
+            
+            % SAVE TELEMETRY
+            if flagSave
+                fitswrite(trs.wfsSl,[saveDir,'WFS_SLOPES/''offaxiswfss_slopes_',num2str(nL_c),'bins_',num2str(dt),'mn_',profileConfig,'_',num2str(date_bin(kBin)),'.fits']);
+                fitswrite(trs.tsSl,[saveDir,'TS_SLOPES/ts_slopes_',num2str(nL_c),'bins_',num2str(dt),'mn_',profileConfig,'_',num2str(date_bin(kBin)),'.fits']);
+                fitswrite(trs.wfsCam,[saveDir,'WFS_CAM/offaxiswfss_cam_',num2str(nL_c),'bins_',num2str(dt),'mn_',profileConfig,'_',num2str(date_bin(kBin)),'.fits']);
+                fitswrite(trs.tsCam,[saveDir,'TS_CAM/ts_slopes_',num2str(nL_c),'bins_',num2str(dt),'mn_',profileConfig,'_',num2str(date_bin(kBin)),'.fits']);
+                if flagMMSE
+                    fitswrite(trs.tomoSl,[saveDir,'TOMO_SLOPES/tomo_slopes_',num2str(nL_c),'bins_',num2str(dt),'mn_',profileConfig,'_',num2str(date_bin(kBin)),'.fits']);
+                end
+                if getZernike
+                    zerAll = zeros(2*nGs+2,nZern,nIter);
+                    zerAll(1,:,:)     = trs.zer.ts_truth;
+                    zerAll(2,:,:)     = trs.zer.ts_rec;
+                    zerAll(3:2+nGs,:,:) = trs.zer.wfs_truth;
+                    zerAll(3+nGs:end,:,:) = trs.zer.wfs_rec;
+                    fitswrite(zerAll,[saveDir,'ZERNIKE_COEFFICIENTS/zer_coeffs_',num2str(nL_c),'bins_',num2str(dt),'mn_',profileConfig,'_',num2str(date_bin(kBin)),'.fits']);
+                end
+            end
+        end
+        
+    otherwise
+        error('The data type to be simulated is not understood')
 end
+
 
 %%
-close all;clc;
-fontsize = 20;
-
-figure;
-imagesc(trs.wfsCam(:,1:1:nL*nPx,end)) ;hold on;
-for j=1:nL-1
-    plot([xlim()],j*nPx*[1,1],'w');
-    plot(j*nPx*[1,1],[ylim()],'w');
+if flagDisp
+    close all;clc;
+    fontsize = 20;
+    
+    figure;
+    imagesc(trs.wfsCam(:,1:1:nL*nPx,end)) ;hold on;
+    for j=1:nL-1
+        plot([xlim()],j*nPx*[1,1],'w');
+        plot(j*nPx*[1,1],[ylim()],'w');
+    end
+    th = 0:pi/50:2*pi;
+    x = nL*nPx * cos(th)/2 + nL*nPx/2;
+    y = nL*nPx * sin(th)/2 + nL*nPx/2;
+    xo = tel.obstructionRatio*nL*nPx * cos(th)/2 + nL*nPx/2;
+    yo = tel.obstructionRatio*nL*nPx * sin(th)/2 + nL*nPx/2;
+    plot(x,y,'w--');
+    plot(xo,yo,'w--');
+    pbaspect([1,1,1]);
+    set(gca,'FontSize',fontsize,'FontName','cmr12','TickLabelInterpreter','latex');
+    xlabel('Detector pixel','interpreter','latex','fontsize',fontsize)
+    ylabel('Detector pixel','interpreter','latex','fontsize',fontsize)
+    cb = colorbar();
+    cb.TickLabelInterpreter = 'latex';
+    cb.FontSize = fontsize;
+    
+    figure
+    imagesc(1e9*trs.opdNGS(:,:,1,end));hold on;
+    pbaspect([1,1,1]);
+    set(gca,'FontSize',fontsize,'FontName','cmr12','TickLabelInterpreter','latex');
+    xlabel('Detector pixel','interpreter','latex','fontsize',fontsize)
+    ylabel('Detector pixel','interpreter','latex','fontsize',fontsize)
+    cb = colorbar();
+    cb.TickLabelInterpreter = 'latex';
+    cb.FontSize = fontsize;
+    
+    
+    tmp = trs.wfsSl(1:36,1,end);
+    sx = zeros(nL);
+    sx(wfs.validLenslet) = tmp;
+    tmp = trs.wfsSl(37:72,1,end);
+    sy = zeros(nL);
+    sy(wfs.validLenslet) = tmp;
+    figure
+    imagesc([sx,sy]);hold on;
+    pbaspect([2,1,1]);
+    set(gca,'FontSize',fontsize,'FontName','cmr12','TickLabelInterpreter','latex');
+    xlabel('WFS subaperture','interpreter','latex','fontsize',fontsize)
+    ylabel('WFS subaperture','interpreter','latex','fontsize',fontsize)
+    xticks(1:14)
+    xticklabels({'1' '2' '3'  '4'  '5' '6' '7' '1' '2' '3' '4' '5' '6' '7'})
+    ax = gca;
+    cb = colorbar();
+    cb.TickLabelInterpreter = 'latex';
+    cb.FontSize = fontsize;
 end
-th = 0:pi/50:2*pi;
-x = nL*nPx * cos(th)/2 + nL*nPx/2;
-y = nL*nPx * sin(th)/2 + nL*nPx/2;
-xo = tel.obstructionRatio*nL*nPx * cos(th)/2 + nL*nPx/2;
-yo = tel.obstructionRatio*nL*nPx * sin(th)/2 + nL*nPx/2;
-plot(x,y,'w--');
-plot(xo,yo,'w--');
-pbaspect([1,1,1]);
-set(gca,'FontSize',fontsize,'FontName','cmr12','TickLabelInterpreter','latex');
-xlabel('Detector pixel','interpreter','latex','fontsize',fontsize)
-ylabel('Detector pixel','interpreter','latex','fontsize',fontsize)
-cb = colorbar();
-cb.TickLabelInterpreter = 'latex';
-cb.FontSize = fontsize;
-
-figure
-imagesc(1e9*trs.opdNGS(:,:,1,end));hold on;
-pbaspect([1,1,1]);
-set(gca,'FontSize',fontsize,'FontName','cmr12','TickLabelInterpreter','latex');
-xlabel('Detector pixel','interpreter','latex','fontsize',fontsize)
-ylabel('Detector pixel','interpreter','latex','fontsize',fontsize)
-cb = colorbar();
-cb.TickLabelInterpreter = 'latex';
-cb.FontSize = fontsize;
-
-
-tmp = trs.wfsSl(1:36,1,end);
-sx = zeros(nL);
-sx(wfs.validLenslet) = tmp;
-tmp = trs.wfsSl(37:72,1,end);
-sy = zeros(nL);
-sy(wfs.validLenslet) = tmp;
-figure
-imagesc([sx,sy]);hold on;
-pbaspect([2,1,1]);
-set(gca,'FontSize',fontsize,'FontName','cmr12','TickLabelInterpreter','latex');
-xlabel('WFS subaperture','interpreter','latex','fontsize',fontsize)
-ylabel('WFS subaperture','interpreter','latex','fontsize',fontsize)
-xticks(1:14)
-xticklabels({'1' '2' '3'  '4'  '5' '6' '7' '1' '2' '3' '4' '5' '6' '7'})
-ax = gca;
-cb = colorbar();
-cb.TickLabelInterpreter = 'latex';
-cb.FontSize = fontsize;
