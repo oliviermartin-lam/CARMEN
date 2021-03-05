@@ -30,12 +30,12 @@ dataType  = 'test';
 % resolution and the number of reconstructed layers (parFile). Simulate nBins time-series of slopes
 
 flagNoise = false; %% TBC %%
-flagSave  = false;
-simuCase  = 'Canary_4LGS'; % TBC
+flagSave  = true;
+simuCase  = 'Canary_3NGS'; % TBC
 flagDisp  = false; % if true, some figures will pop up
 frozenflow= false; % if true, the code simulates temporally correlated time-series of slopes accounting for the frozen-flow assumption
-getZernike= false; % if true, reconstruct Zernike coefficients from phase/slopes
-flagMMSE  = false; %% TBC %%
+getZernike= true; % if true, reconstruct Zernike coefficients from phase/slopes
+flagMMSE  = true; %% TBC %%
 
 %% DEFINING FIXED SIMULATION PARAMETERS
 % read the parameters file
@@ -59,7 +59,7 @@ sref = source('wavelength',photoGs);
 if hGs == 0
     % NATURAL GUIDE STAR
     gs      = source('magnitude',magGs,'zenith',rGs,'azimuth',dGs,'wavelength',photoGs);
-    gsRef   = [];
+    gsRef   = gs;
 else
     % LASER GUIDE STAR
     nPhoton = mean(photoGs.zeroPoint*10.^(-0.4*magGs));
@@ -240,6 +240,14 @@ switch dataType
                 if flagMMSE
                     fitswrite(trs.tomoSl,[saveDir,'TOMO_SLOPES/tomo_slopes_',num2str(atm.layer(2).altitude),'km_noise_',num2str(flagNoise),'.fits']);
                 end
+                if getZernike
+                    zerAll = zeros(2*nGs+2,nZern,nIter);
+                    zerAll(1,:,:)     = trs.zer.ts_truth;
+                    zerAll(2,:,:)     = trs.zer.ts_rec;
+                    zerAll(3:2+nGs,:,:) = trs.zer.wfs_truth;
+                    zerAll(3+nGs:end,:,:) = trs.zer.wfs_rec;
+                    fitswrite(zerAll,[saveDir,'ZERNIKE_COEFFICIENTS/zer_coeffs_',num2str(atm.layer(2).altitude),'km_noise_',num2str(flagNoise),'.fits']);
+                end
             end
         end
         
@@ -265,6 +273,14 @@ switch dataType
             fitswrite(trs.tsCam,[saveDir,'TS_CAM/ts_slopes_',atmName,'_noise_',num2str(flagNoise),'.fits']);
             if flagMMSE
                 fitswrite(trs.tomoSl,[saveDir,'TOMO_SLOPES/tomo_slopes_',num2str(atm.nLayer),'layers_noise_',num2str(flagNoise),'.fits']);
+            end
+            if getZernike
+                    zerAll = zeros(2*nGs+2,nZern,nIter);
+                    zerAll(1,:,:)     = trs.zer.ts_truth;
+                    zerAll(2,:,:)     = trs.zer.ts_rec;
+                    zerAll(3:2+nGs,:,:) = trs.zer.wfs_truth;
+                    zerAll(3+nGs:end,:,:) = trs.zer.wfs_rec;
+                    fitswrite(zerAll,[saveDir,'ZERNIKE_COEFFICIENTS/zer_coeffs_',num2str(atm.nLayer),'layers_noise_',num2str(flagNoise),'.fits']);
             end
         end
         
@@ -342,8 +358,8 @@ if flagDisp
     figure;
     imagesc(trs.wfsCam(:,1:1:nL*nPx,end)) ;hold on;
     for j=1:nL-1
-        plot([xlim()],j*nPx*[1,1],'w');
-        plot(j*nPx*[1,1],[ylim()],'w');
+        plot(xlim(),j*nPx*[1,1],'w');
+        plot(j*nPx*[1,1],ylim(),'w');
     end
     th = 0:pi/50:2*pi;
     x = nL*nPx * cos(th)/2 + nL*nPx/2;
@@ -361,7 +377,7 @@ if flagDisp
     cb.FontSize = fontsize;
     
     figure
-    imagesc(1e9*trs.opdNGS(:,:,1,end));hold on;
+    imagesc(1e9*trs.opdGS(:,:,1,end));hold on;
     pbaspect([1,1,1]);
     set(gca,'FontSize',fontsize,'FontName','cmr12','TickLabelInterpreter','latex');
     xlabel('Detector pixel','interpreter','latex','fontsize',fontsize)

@@ -67,12 +67,12 @@ ron             = 0.7; %Vidal et. al. 2014
 wfsQE           = 0.1;% include detector quantum efficiency and throughput
 
 %5\ LOOP
-nIter           = 1000;%number of simulated frames
+nIter           = 10;%number of simulated frames
 nZern           = 35;
 
 %6\ TRAINING
 % for training data
-nScreens        = 5; %% TBC %%
+nScreens        = 2; %% TBC %%
 hmin            = 10;%minimal altitude
 hmax            = 15500;%maximal altitude
 L0_training     = [25,25];
@@ -80,6 +80,6 @@ fractionalR0_training = [0.5,0.5];
 
 %7\ OBS
 profileConfig = 'variable'; %typical, calm or variable
-nL_c = 6; % number of layers
-dt   = 5; %in minutes
+nL_c = 2; % number of layers
+dt   = 20; %in minutes
 

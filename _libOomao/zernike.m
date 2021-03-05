@@ -793,9 +793,11 @@ classdef zernike < telescopeAbstract
             % Radial function
             function R = R_fun(r,n,m)
                 R=zeros(size(r));
+                fprintf('(n-m)/2 =  = %d\n',(n-m)/2  )
                 for s=0:(n-m)/2
-                    R = R + (-1).^s.*prod(1:(n-s)).*r.^(n-2.*s)./...
-                        (prod(1:s).*prod(1:((n+m)/2-s)).*prod(1:((n-m)/2-s)));
+                    ff = prod(1:(n-s))/(prod(1:s).*prod(1:((n+m)/2-s)).*prod(1:((n-m)/2-s)));
+                    R = R + (-1).^s.*ff.*r.^(n-2.*s);
+                    fprintf('Factorial factor =  = %d\n',ff  )
                 end
                 
                 
