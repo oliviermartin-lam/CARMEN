@@ -72,7 +72,7 @@ ron             = 0.7; %Vidal et. al. 2014
 wfsQE           = 0.1;% include detector quantum efficiency and throughput
 
 %5\ LOOP
-nIter           = 1000;%number of simulated frames
+nIter           = 100;%number of simulated frames
 nZern           = 35;
 
 %6\ TRAINING

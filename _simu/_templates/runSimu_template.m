@@ -18,7 +18,7 @@ path_scidar     = [path_carmen,'_scidar/']; % the directory containing Scidar da
 addpath(genpath(path_oomao),genpath(path_simu),genpath(path_processing),path_scidar);
 
 %% MANAGE OPTIONS
-dataType  = 'test'; 
+dataType  = 'obs'; 
 % Can be : 
 
 % training : 2-layers atmosphere with a variable-altitude for the second layer. The altitude is linearly dsampled from hmin to hmax using nScreens values (parFile).
@@ -34,8 +34,8 @@ flagSave  = true;
 simuCase  = 'Canary_3NGS'; % TBC
 flagDisp  = false; % if true, some figures will pop up
 frozenflow= false; % if true, the code simulates temporally correlated time-series of slopes accounting for the frozen-flow assumption
-getZernike= true; % if true, reconstruct Zernike coefficients from phase/slopes
-flagMMSE  = true; %% TBC %%
+getZernike= false; % if true, reconstruct Zernike coefficients from phase/slopes
+flagMMSE  = false; %% TBC %%
 
 %% DEFINING FIXED SIMULATION PARAMETERS
 % read the parameters file
@@ -95,7 +95,7 @@ else
     % See also: source
     
 end
-nGs    = numel(gs);
+nGs    = numel(rGs);
 %check where sources are in polar coordinates
 if flagDisp
     figure;
@@ -298,7 +298,7 @@ switch dataType
     case 'obs'
         % GET CN2 PROFILES
         [Cn2_c,alt_c,r0,date_bin]  = readScidarData(path_scidar,profileConfig,dt,nL_c,photoGs.wavelength,flagDisp);
-        nBin   = size(Cn2_c,2);
+        nBin   = size(Cn2_c,1);
         vmean  = mean(windSpeed);
         
         % SIMULATING TIME-SERIES FOR EACH PROFILE

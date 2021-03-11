@@ -137,14 +137,21 @@ if ~isempty(S2Z)
     trs.wfe.uncorrected_th  = sqrt(1.03*(tel.D/atm.r0)^(5/3))*atm.wavelength*1e9/2/pi;
     %2\ MMSE
     if mmse
-        [trs.Rmmse,trs.wfe.mmse_th] = getMMSE(tel,atm,gs,wfs,sref,S2Z);
-        trs.tomoSl                  = trs.Rmmse*reshape(trs.wfsSl,nSl*nGs,nIter);
-        trs.wfe.mmse                = getWaveFrontErrorFromSlopes(trs.tsSl - trs.tomoSl,S2Z);
+        % note: with LGSs, we may have several sources at the same position
+        % in the field to account for the sodium profile thickness; we take
+        % the lowest ones
+        [trs.Rmmse,trs.wfe.mmse_th] = getMMSE(tel,atm,gs(1:nGs),wfs,sref,S2Z);
+        %trs.tomoSl                  = trs.Rmmse*reshape(trs.wfsSl,nSl*nGs,nIter);
+        
+        %iNoiseCovMat = wfs.theoreticalNoise(tel, atm, gs, sref,'computeInverseCovMat',true);%,'naParam',repmat([10000,90000],3,1),'lgsLaunchCoord',zeros(3,2));
+        %trs.Rmmse    = sparseLMMSE(wfs,tel,atm,gs);%,'iNoiseVar',blkdiag(iNoiseCovMat{:}));
+        trs.tomoSl   = trs.Rmmse*reshape(trs.wfsSl,nSl*nGs,nIter);
+        trs.wfe.mmse = getWaveFrontErrorFromSlopes(trs.tsSl - trs.tomoSl,S2Z);
     end
     %3\ Zernike coefficients
     if getZernike && ~isempty(P2Z)
         % ON-AXIS
-        trs.zer.ts_truth = P2Z * sref.waveNumber*reshape(opdTS,nPx^2,nIter);
+        trs.zer.ts_truth = P2Z * sref.waveNumber*reshape(opdTS,tel.resolution^2,nIter);
         trs.zer.ts_rec = S2Z * tsSl;
         
         % OFF-AXIS
@@ -152,7 +159,7 @@ if ~isempty(S2Z)
         trs.zer.wfs_truth = zeros(nGs,nZer,nIter);
         trs.zer.wfs_rec   = zeros(nGs,nZer,nIter);
         for n = 1:nGs
-            trs.zer.wfs_truth(n,:,:) = P2Z * sref.waveNumber*reshape(squeeze(opdGS(:,:,n,:)),nPx^2,nIter);
+            trs.zer.wfs_truth(n,:,:) = P2Z * sref.waveNumber*reshape(squeeze(opdGS(:,:,n,:)),tel.resolution^2,nIter);
             trs.zer.wfs_rec(n,:,:)   = S2Z * squeeze(wfsSl(:,n,:));
         end
         % TOMOGRAPHY

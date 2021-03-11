@@ -7,9 +7,9 @@ else
 end
 
 
-covModel = slopesCovarianceModel(tel,atm,wfs,[sref,ngs],'Projector',S2Z,'isFFT',false);
-ps = wfs.camera.pixelScale*constants.radian2arcsec;
-covMat = covModel.getCovarianceMatrix()/ps^2; %in pixel^2
-Rmmse = covModel.getMMMSEreconstructor(covMat,cond); % MMSE reconstructor
-Cee  = covModel.getErrorCovarianceMatrix(covMat,Rmmse);
-wfeTomo =  covModel.getWaveFrontError(Cee); %Cee in pixel
+covModel    = slopesCovarianceModel(tel,atm,wfs,[ngs,sref],'Projector',S2Z,'isFFT',false);
+ps          = wfs.camera.pixelScale*constants.radian2arcsec;
+covMat      = covModel.getCovarianceMatrix()/ps^2; %in pixel^2
+Rmmse       = covModel.getMMMSEreconstructor(covMat,cond); % MMSE reconstructor
+Cee         = covModel.getErrorCovarianceMatrix(covMat,Rmmse);
+wfeTomo     = covModel.getWaveFrontError(Cee); %Cee in pixel
