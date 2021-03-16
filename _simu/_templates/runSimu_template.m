@@ -30,12 +30,12 @@ dataType  = 'obs';
 % resolution and the number of reconstructed layers (parFile). Simulate nBins time-series of slopes
 
 flagNoise = false; %% TBC %%
-flagSave  = true;
-simuCase  = 'Canary_3NGS'; % TBC
+flagSave  = false;
+simuCase  = 'Canary_4LGS'; % TBC
 flagDisp  = false; % if true, some figures will pop up
 frozenflow= false; % if true, the code simulates temporally correlated time-series of slopes accounting for the frozen-flow assumption
 getZernike= false; % if true, reconstruct Zernike coefficients from phase/slopes
-flagMMSE  = false; %% TBC %%
+flagMMSE  = true; %% TBC %%
 
 %% DEFINING FIXED SIMULATION PARAMETERS
 % read the parameters file
@@ -320,7 +320,7 @@ switch dataType
             %MMSE RECONSTRUCTOR
             if flagMMSE
                 if kBin == 1
-                    Rmmse = getMMSE(tel,atm,gs,wfs,sref,S2Z);
+                    Rmmse = getMMSE(tel,atm,gs(1:nGs),wfs,sref,S2Z);
                 end
                 trs.tomoSl = Rmmse*reshape(trs.wfsSl,nSl*nGs,nIter);
             end
