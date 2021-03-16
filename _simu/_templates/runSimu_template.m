@@ -30,12 +30,12 @@ dataType  = 'obs';
 % resolution and the number of reconstructed layers (parFile). Simulate nBins time-series of slopes
 
 flagNoise = false; %% TBC %%
-flagSave  = false;
-simuCase  = 'Canary_4LGS'; % TBC
+flagSave  = true;
+simuCase  = 'Canary_3NGS'; % TBC
 flagDisp  = false; % if true, some figures will pop up
 frozenflow= false; % if true, the code simulates temporally correlated time-series of slopes accounting for the frozen-flow assumption
 getZernike= false; % if true, reconstruct Zernike coefficients from phase/slopes
-flagMMSE  = true; %% TBC %%
+flagMMSE  = false; %% TBC %%
 
 %% DEFINING FIXED SIMULATION PARAMETERS
 % read the parameters file
@@ -205,7 +205,7 @@ end
 
 %% CREATING SAVING FOLDERS
 if flagSave
-    st = {'WFS_CAM','WFS_SLOPES','TS_CAM','TS_SLOPES','TOMO_SLOPES','ZERNIKE_COEFFICIENTS'};
+    st = {'WFS_CAM','WFS_SLOPES','TS_CAM','TS_SLOPES','CN2','TOMO_SLOPES','ZERNIKE_COEFFICIENTS'};
     saveDir = [path_res,upper(simuCase),'/',dataType,'/'];
     for k=1:numel(st)
         path = [saveDir,st{k}];
@@ -237,6 +237,8 @@ switch dataType
                 fitswrite(trs.tsSl,[saveDir,'TS_SLOPES/ts_slopes_',num2str(atm.layer(2).altitude),'km_noise_',num2str(flagNoise),'.fits']);
                 fitswrite(trs.wfsCam,[saveDir,'WFS_CAM/offaxiswfss_cam_',num2str(atm.layer(2).altitude),'km_noise_',num2str(flagNoise),'.fits']);
                 fitswrite(trs.tsCam,[saveDir,'TS_CAM/ts_slopes_',num2str(atm.layer(2).altitude),'km_noise_',num2str(flagNoise),'.fits']);
+                fitswrite([[atm.layers.altitude];atm.r0^(-5/3) * [atm.layers.factionnalR0]] ,[saveDir,'CN2/Cn2_',num2str(atm.layer(2).altitude),'km_noise_',num2str(flagNoise),'.fits']);
+
                 if flagMMSE
                     fitswrite(trs.tomoSl,[saveDir,'TOMO_SLOPES/tomo_slopes_',num2str(atm.layer(2).altitude),'km_noise_',num2str(flagNoise),'.fits']);
                 end
@@ -271,6 +273,8 @@ switch dataType
             fitswrite(trs.tsSl,[saveDir,'TS_SLOPES/ts_slopes_',atmName,'_noise_',num2str(flagNoise),'.fits']);
             fitswrite(trs.wfsCam,[saveDir,'WFS_CAM/offaxiswfss_cam_',atmName,'_noise_',num2str(flagNoise),'.fits']);
             fitswrite(trs.tsCam,[saveDir,'TS_CAM/ts_slopes_',atmName,'_noise_',num2str(flagNoise),'.fits']);
+            fitswrite([[atm.layers.altitude];atm.r0^(-5/3) * [atm.layers.factionnalR0]] ,[saveDir,'CN2/Cn2_',atmName,'_noise_',num2str(flagNoise),'.fits']);
+
             if flagMMSE
                 fitswrite(trs.tomoSl,[saveDir,'TOMO_SLOPES/tomo_slopes_',num2str(atm.nLayer),'layers_noise_',num2str(flagNoise),'.fits']);
             end
@@ -331,6 +335,7 @@ switch dataType
                 fitswrite(trs.tsSl,[saveDir,'TS_SLOPES/ts_slopes_',num2str(nL_c),'bins_',num2str(dt),'mn_',profileConfig,'_',num2str(date_bin(kBin)),'.fits']);
                 fitswrite(trs.wfsCam,[saveDir,'WFS_CAM/offaxiswfss_cam_',num2str(nL_c),'bins_',num2str(dt),'mn_',profileConfig,'_',num2str(date_bin(kBin)),'.fits']);
                 fitswrite(trs.tsCam,[saveDir,'TS_CAM/ts_slopes_',num2str(nL_c),'bins_',num2str(dt),'mn_',profileConfig,'_',num2str(date_bin(kBin)),'.fits']);
+                fitswrite([alt_c(kBin,idGood);r0(kBin)^(-5/3) * wK] ,[saveDir,'CN2/Cn2_',num2str(nL_c),'bins_',num2str(dt),'mn_',profileConfig,'_',num2str(date_bin(kBin)),'.fits']);
                 if flagMMSE
                     fitswrite(trs.tomoSl,[saveDir,'TOMO_SLOPES/tomo_slopes_',num2str(nL_c),'bins_',num2str(dt),'mn_',profileConfig,'_',num2str(date_bin(kBin)),'.fits']);
                 end
