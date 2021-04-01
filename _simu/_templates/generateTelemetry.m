@@ -61,9 +61,7 @@ if multicpu && ~frozenflow
     % multi-cpu code
     for kIter=1:nIter
         %1\ Updating phase screens
-        %atm2 = tools.duplicateAtmosphere(atm);
         rngStream = RandStream('mt19937ar');
-        %tel2 = tel+atm2
         draw(tel,rngStream);
        
         %2\ Propagating sources to the TS
@@ -86,7 +84,6 @@ if multicpu && ~frozenflow
         %store slopes and pixels
         wfsSl(:,:,kIter)    = wfs.slopes;
         wfsCam(:,:,kIter)   = wfs.camera.frame;
-        
     end
     
 else

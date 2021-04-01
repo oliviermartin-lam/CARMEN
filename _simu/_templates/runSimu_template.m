@@ -30,12 +30,12 @@ dataType  = 'obs';
 % resolution and the number of reconstructed layers (parFile). Simulate nBins time-series of slopes
 
 flagNoise = false; %% TBC %%
-flagSave  = true;
+flagSave  = false;
 simuCase  = 'Canary_3NGS'; % TBC
 flagDisp  = false; % if true, some figures will pop up
 frozenflow= false; % if true, the code simulates temporally correlated time-series of slopes accounting for the frozen-flow assumption
 getZernike= false; % if true, reconstruct Zernike coefficients from phase/slopes
-flagMMSE  = false; %% TBC %%
+flagMMSE  = true; %% TBC %%
 
 %% DEFINING FIXED SIMULATION PARAMETERS
 % read the parameters file
@@ -301,10 +301,10 @@ switch dataType
         
     case 'obs'
         % GET CN2 PROFILES
-        [Cn2_c,alt_c,r0,date_bin]  = readScidarData(path_scidar,profileConfig,dt,nL_c,photoGs.wavelength,flagDisp);
+        [Cn2_c,alt_c,r0,date_bin,Cn2_upd,r0_upd,date_upd] = readScidarData(path_scidar,profileConfig,dt,nL_c,photoGs.wavelength,'display',flagDisp,'tupd',tupd);
         nBin   = size(Cn2_c,1);
         vmean  = mean(windSpeed);
-        
+        kUpd   = 1;
         % SIMULATING TIME-SERIES FOR EACH PROFILE
         for kBin = 1:nBin
             % UPDATING ATMOSPHERE
@@ -323,8 +323,16 @@ switch dataType
             
             %MMSE RECONSTRUCTOR
             if flagMMSE
-                if kBin == 1
-                    Rmmse = getMMSE(tel,atm,gs(1:nGs),wfs,sref,S2Z);
+                if abs(date_upd(kUpd) - date_bin(kBin)) < dt/60/2
+                    % redefining the atmosphere
+                    idGood = Cn2_upd(kUpd,:) ~=0;
+                    wK     = Cn2_upd(kUpd,idGood);
+                    wK     = wK/sum(wK);
+                    atm_ref   = atmosphere(photoGs,r0_upd(kUpd),mean(L0),'layeredL0',mean(L0),'fractionnalR0',wK,...
+                        'altitude',alt_c(1,idGood),'windSpeed',vmean*ones(1,nL_c),'windDirection',zeros(1,nL_c));
+                    % Updating the MMSE reconstructor
+                    Rmmse = getMMSE(tel,atm_ref,gs(1:nGs),wfs,sref,S2Z);
+                    kUpd  = kUpd + 1;
                 end
                 trs.tomoSl = Rmmse*reshape(trs.wfsSl,nSl*nGs,nIter);
             end

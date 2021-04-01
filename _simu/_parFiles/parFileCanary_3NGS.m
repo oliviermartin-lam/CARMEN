@@ -67,7 +67,7 @@ ron             = 0.7; %Vidal et. al. 2014
 wfsQE           = 0.1;% include detector quantum efficiency and throughput
 
 %5\ LOOP
-nIter           = 10;%number of simulated frames
+nIter           = 1000;%number of simulated frames
 nZern           = 35;
 
 %6\ TRAINING
@@ -80,6 +80,6 @@ fractionalR0_training = [0.5,0.5];
 
 %7\ OBS
 profileConfig = 'variable'; %typical, calm or variable
-nL_c = 2; % number of layers
-dt   = 60; %in minutes
-
+nL_c = 2; % number of layers to compress the profile
+dt   = 5; % temporal sampling of the profile in minutes
+tupd = 20;% refreshing time to update the MMSE
